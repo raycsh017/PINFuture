@@ -167,27 +167,44 @@ typedef NS_ENUM(NSUInteger, PINFutureState) {
 
 @end
 
-@implementation PINFuture (Pending)
+@interface PINFuturePending ()
+@property (nonatomic, strong) PINFuture<id> *pendingFuture;
+@property (nonatomic, copy) void (^resolve)(id value);
+@property (nonatomic, copy) void (^reject)(NSError *error);
+@end
 
-+ (instancetype)pendingFuture
+@implementation PINFuturePending
+
+- (instancetype)init
 {
-    return [[PINFuture alloc] initPrivate];
+    self = [super init];
+    if (self) {
+        _pendingFuture = [PINFuture withBlock:^(void (^ _Nonnull resolve)(id), void (^ _Nonnull reject)(NSError * _Nonnull)) {
+            self.resolve = [resolve copy];
+            self.reject = [reject copy];
+        }];
+    }
+    return self;
+}
+
+- (PINFuture *)future
+{
+    return self.pendingFuture;
 }
 
 - (void)fulfillWithValue:(id)value
 {
-    NSParameterAssert(value != nil);
-    NSParameterAssert([value isKindOfClass:[NSError class]] == NO);
-    [self transitionToState:PINFutureStateFulfilled value:value error:nil];
+    if (self.resolve) {
+        self.resolve(value);
+    }
 }
 
 - (void)rejectWithError:(NSError *)error
 {
-    NSParameterAssert(error != nil);
-    NSParameterAssert([error isKindOfClass:[NSError class]]);
-    [self transitionToState:PINFutureStateRejected value:nil error:error];
+    if (self.reject) {
+        self.reject(error);
+    }
 }
-
 
 @end
 

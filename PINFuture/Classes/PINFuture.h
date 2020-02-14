@@ -57,9 +57,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface PINFuture<ObjectType> (Pending)
+@interface PINFuturePending<ObjectType> : NSObject
 
-+ (instancetype)pendingFuture;
+- (instancetype)init;
+
+- (PINFuture<ObjectType> *)future;
 
 - (void)fulfillWithValue:(id)value;
 - (void)rejectWithError:(NSError *)error;
